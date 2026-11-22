@@ -213,7 +213,7 @@
       <h3>Get 10% off your first order</h3>
       <p>Join 40,000+ subscribers. Product launches, deals and charging tips — no spam, GDPR-safe.</p>
     </div>
-    <form onsubmit="event.preventDefault(); toast('🎉 Thanks! Your 10% code is on the way.'); this.reset();">
+    <form onsubmit="subscribeNewsletter(event, this)">
       <input type="email" required placeholder="Your email address">
       <button class="btn btn-primary" type="submit">Subscribe</button>
     </form>
@@ -290,12 +290,17 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
 <script>
-  // Best sellers: top 4 by review count
-  const best = [...PRODUCTS].sort((a, b) => b.reviews - a.reviews).slice(0, 4);
-  document.getElementById("bestSellers").innerHTML = best.map(productCard).join("");
+  (async () => {
+    await window.VOLTARO_PRODUCTS_READY;
+    const best = [...PRODUCTS].sort((a, b) => b.reviews - a.reviews).slice(0, 4);
+    document.getElementById("bestSellers").innerHTML = best.map(productCard).join("");
+  })();
 </script>
 </body>
 </html>

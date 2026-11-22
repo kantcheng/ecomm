@@ -88,39 +88,25 @@
     </div>
 
     <!-- LOGIN -->
-    <form id="loginForm" onsubmit="doLogin(event)">
+    <form id="loginForm" onsubmit="submitLogin(event)">
       <h1>Welcome back 👋</h1>
-      <p class="sub">Sign in to track orders, manage addresses and use saved payment methods.</p>
+      <p class="sub">Sign in with a one-time code sent to your email — no password needed.</p>
       <div class="field">
         <label for="loginEmail">Email address</label>
         <input id="loginEmail" type="email" placeholder="you@example.eu" autocomplete="email" required>
       </div>
       <div class="field">
-        <label for="loginPassword">Password</label>
-        <input id="loginPassword" type="password" placeholder="Your password" autocomplete="current-password" required>
+        <label for="loginCode">Verification code</label>
+        <input id="loginCode" type="text" inputmode="numeric" placeholder="Enter the 6-digit code" autocomplete="one-time-code" required>
       </div>
-      <div class="auth-row">
-        <label><input type="checkbox" id="remember" checked> Keep me signed in</label>
-        <a href="#" onclick="event.preventDefault(); toast('📧 Password reset link sent (demo)')">Forgot password?</a>
-      </div>
-      <button class="btn btn-primary" type="submit">Sign in</button>
-
-      <div class="divider">or continue with</div>
-      <div class="socials">
-        <button type="button" onclick="oauth('Google')">
-          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.4a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.6-5.2 3.6-8.8z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.7l4-3z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.5 1.8l3.4-3.4A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>
-          Google
-        </button>
-        <button type="button" onclick="oauth('Apple')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M16.4 12.7c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3 .9-3.8.9-.8 0-2-.9-3.3-.9-1.7 0-3.3 1-4.1 2.5-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.5 1.3-.1 1.8-.8 3.4-.8s2 .8 3.3.8c1.4 0 2.3-1.2 3.1-2.5.9-1.4 1.3-2.7 1.3-2.8-.1 0-2.9-1.1-2.9-4zM14 4.6c.7-.9 1.2-2.1 1-3.3-1 .1-2.3.7-3 1.6-.7.8-1.3 2-1.1 3.2 1.1.1 2.3-.6 3.1-1.5z"/></svg>
-          Apple
-        </button>
-      </div>
-      <p class="legal-note">Protected by reCAPTCHA. By signing in you agree to our <a href="terms.html" style="color:var(--blue-dark)">Terms</a> and <a href="privacy.html" style="color:var(--blue-dark)">Privacy Policy</a>.</p>
+      <button class="btn btn-outline" type="button" id="loginSendBtn" onclick="sendLoginCode()">Send verification code</button>
+      <button class="btn btn-primary" type="submit" style="margin-top:12px">Sign in</button>
+      <p class="hint" id="loginHint" style="margin-top:10px;min-height:16px"></p>
+      <p class="legal-note">By signing in you agree to our <a href="terms.html" style="color:var(--blue-dark)">Terms</a> and <a href="privacy.html" style="color:var(--blue-dark)">Privacy Policy</a>.</p>
     </form>
 
     <!-- REGISTER -->
-    <form id="registerForm" onsubmit="doRegister(event)" style="display:none">
+    <form id="registerForm" onsubmit="submitRegister(event)" style="display:none">
       <h1>Create your account</h1>
       <p class="sub">Get 10% off your first order and free shipping over €50.</p>
       <div class="field">
@@ -132,12 +118,6 @@
         <input id="regEmail" type="email" placeholder="you@example.eu" autocomplete="email" required>
       </div>
       <div class="field">
-        <label for="regPassword">Password</label>
-        <input id="regPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" required oninput="checkStrength(this.value)">
-        <div class="strength"><i id="strengthBar"></i></div>
-        <div class="hint">Use 8+ characters with letters, numbers and a symbol.</div>
-      </div>
-      <div class="field">
         <label for="regCountry">Country</label>
         <select id="regCountry" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:14px;background:#fff">
           <option>🇳🇱 Netherlands</option><option>🇩🇪 Germany</option><option>🇫🇷 France</option>
@@ -147,6 +127,11 @@
         </select>
       </div>
       <div class="field">
+        <label for="regCode">Verification code</label>
+        <input id="regCode" type="text" inputmode="numeric" placeholder="Enter the 6-digit code" autocomplete="one-time-code" required>
+      </div>
+      <button class="btn btn-outline" type="button" id="regSendBtn" onclick="sendRegisterCode()">Send verification code</button>
+      <div class="field" style="margin-top:16px">
         <label style="display:flex;gap:8px;font-weight:400;align-items:flex-start;cursor:pointer">
           <input type="checkbox" required style="width:auto;margin-top:3px">
           <span style="font-size:12.5px;color:var(--muted)">I agree to the <a href="terms.html" style="color:var(--blue-dark)">Terms of Service</a> and consent to the processing of my data as described in the <a href="privacy.html" style="color:var(--blue-dark)">Privacy Policy</a> (GDPR Art. 6(1)(b)).</span>
@@ -159,6 +144,7 @@
         </label>
       </div>
       <button class="btn btn-primary" type="submit">Create account</button>
+      <p class="hint" id="regHint" style="margin-top:10px;min-height:16px"></p>
       <p class="legal-note">You have the right to withdraw consent at any time. See our <a href="privacy.html" style="color:var(--blue-dark)">Privacy Policy</a>.</p>
     </form>
   </div>
@@ -200,6 +186,9 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
 <script>
@@ -211,53 +200,103 @@
     document.getElementById("registerForm").style.display = login ? "none" : "block";
   }
 
-  function saveUser(user) {
-    localStorage.setItem("voltaro_user", JSON.stringify(user));
+  function setHint(id, message, isError) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = message || "";
+    el.style.color = isError ? "#c0392b" : "#1a7f4b";
   }
-  function currentUser() {
-    try { return JSON.parse(localStorage.getItem("voltaro_user")); } catch { return null; }
+  function errText(err) {
+    return (err && err.message) || "Something went wrong. Please try again.";
   }
 
-  function doLogin(e) {
+  async function sendCode(emailInputId, buttonId, hintId, codeInputId) {
+    const emailEl = document.getElementById(emailInputId);
+    const email = emailEl.value.trim();
+    if (!email) {
+      setHint(hintId, "Enter your email address first.", true);
+      emailEl.focus();
+      return;
+    }
+    const btn = document.getElementById(buttonId);
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    try {
+      if (!window.VOLTARO_AUTH) throw new Error("Sign-in service is unavailable.");
+      await window.VOLTARO_AUTH.sendEmailCode(email);
+      setHint(hintId, "Code sent. Check your inbox.", false);
+      document.getElementById(codeInputId).focus();
+    } catch (err) {
+      setHint(hintId, errText(err), true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Send verification code";
+    }
+  }
+  function sendLoginCode() {
+    return sendCode("loginEmail", "loginSendBtn", "loginHint", "loginCode");
+  }
+  function sendRegisterCode() {
+    return sendCode("regEmail", "regSendBtn", "regHint", "regCode");
+  }
+
+  function nextPage() {
+    const allowed = ["account.html", "checkout.html", "cart.html", "index.html"];
+    const target = new URLSearchParams(location.search).get("returnTo");
+    return allowed.indexOf(target) >= 0 ? target : "account.html";
+  }
+
+  async function ensureProfile(data, extra) {
+    const session = data && (data.session || data);
+    const user = (session && session.user) || {};
+    if (!window.VOLTARO_DB) return;
+    const existing = await window.VOLTARO_DB.getProfile().catch(() => null);
+    if (existing) return;
+    await window.VOLTARO_DB.saveProfile({
+      email: extra.email || user.email || "",
+      name: extra.name || user.name || "",
+      country: extra.country || "",
+      phone: user.phone || null,
+      newsletter_opt_in: !!extra.newsletter,
+    });
+  }
+
+  async function submitLogin(e) {
     e.preventDefault();
     const email = document.getElementById("loginEmail").value.trim();
-    // Demo only: real auth must be server-side (e.g. OAuth2 / session cookie).
-    saveUser({ email, name: email.split("@")[0], ts: Date.now() });
-    toast("✅ Signed in — welcome back!");
-    setTimeout(() => (location.href = "index.html"), 900);
+    const code = document.getElementById("loginCode").value.trim();
+    setHint("loginHint", "Signing in…", false);
+    try {
+      if (!window.VOLTARO_AUTH) throw new Error("Sign-in service is unavailable.");
+      const data = await window.VOLTARO_AUTH.verifyEmailCode(email, code);
+      await ensureProfile(data, { email: email });
+      toast("✅ Signed in — welcome back!");
+      location.href = nextPage();
+    } catch (err) {
+      setHint("loginHint", errText(err), true);
+    }
   }
 
-  function doRegister(e) {
+  async function submitRegister(e) {
     e.preventDefault();
-    const name = document.getElementById("regName").value.trim();
     const email = document.getElementById("regEmail").value.trim();
-    saveUser({ email, name, newsletter: document.getElementById("newsOptIn").checked, ts: Date.now() });
-    toast("🎉 Account created — 10% code sent to your email");
-    setTimeout(() => (location.href = "index.html"), 1000);
-  }
-
-  function checkStrength(v) {
-    let s = 0;
-    if (v.length >= 8) s++;
-    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s++;
-    if (/\d/.test(v)) s++;
-    if (/[^A-Za-z0-9]/.test(v)) s++;
-    const bar = document.getElementById("strengthBar");
-    const map = [0, 25, 50, 75, 100];
-    const colors = ["#e4e8ee", "#e2574c", "#f5a623", "#58c5f0", "#21a15d"];
-    bar.style.width = map[s] + "%";
-    bar.style.background = colors[s];
-  }
-
-  function oauth(provider) {
-    toast(`🔗 ${provider} sign-in (demo — plug in OAuth provider here)`);
-  }
-
-  // Greet a returning user and prefill the email
-  const u = currentUser();
-  if (u) {
-    document.getElementById("loginEmail").value = u.email || "";
-    document.querySelector(".auth-card h1").textContent = `Welcome back, ${u.name || "friend"} 👋`;
+    const code = document.getElementById("regCode").value.trim();
+    const name = document.getElementById("regName").value.trim();
+    const country = document.getElementById("regCountry").value;
+    const newsletter = document.getElementById("newsOptIn").checked;
+    setHint("regHint", "Creating your account…", false);
+    try {
+      if (!window.VOLTARO_AUTH) throw new Error("Sign-in service is unavailable.");
+      const data = await window.VOLTARO_AUTH.verifyEmailCode(email, code);
+      await ensureProfile(data, { email: email, name: name, country: country, newsletter: newsletter });
+      if (newsletter && window.VOLTARO_DB) {
+        await window.VOLTARO_DB.subscribe(email, "register").catch(() => {});
+      }
+      toast("🎉 Account created — welcome to Voltaro!");
+      location.href = nextPage();
+    } catch (err) {
+      setHint("regHint", errText(err), true);
+    }
   }
 </script>
 </body>

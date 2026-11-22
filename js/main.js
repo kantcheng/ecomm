@@ -5,6 +5,7 @@
 
 const CART_KEY = "voltaro_cart_v1";
 const COOKIE_KEY = "voltaro_cookie_consent_v1";
+let cloudCartEnabled = false;
 
 /* ---------- Cart ---------- */
 function getCart() {
@@ -17,6 +18,9 @@ function getCart() {
 function saveCart(cart) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   updateCartBadge();
+  if (cloudCartEnabled && window.VOLTARO_DB) {
+    window.VOLTARO_DB.saveCart(cart).catch(() => {});
+  }
 }
 function addToCart(id, qty = 1) {
   const cart = getCart();
@@ -42,6 +46,34 @@ function updateCartBadge() {
   document.querySelectorAll(".cart-badge").forEach((el) => {
     el.textContent = cartCount();
   });
+}
+
+/* Signed-in carts live in the cloud; anonymous carts stay in localStorage. */
+window.VOLTARO_CART_READY = (async () => {
+  if (!window.VOLTARO_AUTH || !window.VOLTARO_DB) return;
+  try {
+    const { session } = await window.VOLTARO_AUTH.getSession();
+    if (!session) return;
+    const local = getCart();
+    const remote = await window.VOLTARO_DB.getCart();
+    const merged = Object.keys(local).length ? local : remote;
+    localStorage.setItem(CART_KEY, JSON.stringify(merged));
+    cloudCartEnabled = true;
+    updateCartBadge();
+    await window.VOLTARO_DB.saveCart(merged);
+  } catch (err) {
+    cloudCartEnabled = false;
+  }
+})();
+
+async function updateAccountLink() {
+  const link = document.querySelector('.nav-actions a[href="login.html"]');
+  if (!link || !window.VOLTARO_AUTH) return;
+  const { session } = await window.VOLTARO_AUTH.getSession();
+  if (!session) return;
+  link.setAttribute("href", "account.html");
+  const nodes = link.childNodes;
+  if (nodes.length) nodes[nodes.length - 1].textContent = " My Account";
 }
 
 /* ---------- Product card ---------- */
@@ -103,6 +135,25 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
 }
 
+/* ---------- Newsletter (cloud database) ---------- */
+async function subscribeNewsletter(event, form) {
+  event.preventDefault();
+  const input = form.querySelector('input[type="email"]');
+  const email = input ? input.value.trim() : "";
+  if (!email) return;
+  if (!window.VOLTARO_DB) {
+    toast("Subscription is temporarily unavailable. Please try again later.");
+    return;
+  }
+  try {
+    const result = await window.VOLTARO_DB.subscribe(email, "homepage");
+    toast(result.already ? "You are already subscribed." : "🎉 Thanks! Your 10% code is on its way.");
+    form.reset();
+  } catch (err) {
+    toast("Subscription failed. Please try again later.");
+  }
+}
+
 /* ---------- GDPR cookie consent ---------- */
 function initCookieBanner() {
   const bar = document.getElementById("cookieBar");
@@ -117,7 +168,15 @@ function initCookieBanner() {
 }
 
 /* ---------- Shared init ---------- */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   updateCartBadge();
   initCookieBanner();
+  await Promise.all([
+    window.VOLTARO_PRODUCTS_READY,
+    window.VOLTARO_CART_READY,
+  ].filter(Boolean));
+  updateAccountLink();
+  if (window.VOLTARO_CLOUD_ERROR) {
+    toast("Cloud catalog unavailable — showing demo products.");
+  }
 });

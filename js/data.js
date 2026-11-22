@@ -12,7 +12,7 @@ window.VOLTARO_CONFIG = {
   supportEmail: "support@voltaro.eu",
 };
 
-const PRODUCTS = [
+let PRODUCTS = [
   {
     id: "pb-20000",
     name: "VoltCore 20K Power Bank",
@@ -173,3 +173,17 @@ function eur(v) {
 function findProduct(id) {
   return PRODUCTS.find((p) => p.id === id);
 }
+
+/* Replace the bundled demo catalogue with the live cloud rows when available. */
+window.VOLTARO_PRODUCTS_READY = (async () => {
+  if (!window.VOLTARO_DB) {
+    window.VOLTARO_CLOUD_ERROR = "Cloud database client unavailable";
+    return;
+  }
+  try {
+    const rows = await window.VOLTARO_DB.getProducts();
+    if (rows.length) PRODUCTS = rows;
+  } catch (err) {
+    window.VOLTARO_CLOUD_ERROR = err;
+  }
+})();

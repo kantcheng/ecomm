@@ -133,10 +133,15 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
 <script>
-  const params = new URLSearchParams(location.search);
+  (async () => {
+    await window.VOLTARO_PRODUCTS_READY;
+    const params = new URLSearchParams(location.search);
   const cats = [...new Set(PRODUCTS.map((p) => p.category))];
   const state = {
     cat: params.get("cat") || "all",
@@ -188,7 +193,8 @@
     render();
   });
 
-  render();
+    render();
+  })();
 </script>
 </body>
 </html>

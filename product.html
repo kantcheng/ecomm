@@ -112,10 +112,15 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
 <script>
-  const id = new URLSearchParams(location.search).get("id");
+  (async () => {
+    await window.VOLTARO_PRODUCTS_READY;
+    const id = new URLSearchParams(location.search).get("id");
   const p = findProduct(id) || PRODUCTS[0];
   document.title = `${p.name} | Voltaro EU`;
 
@@ -151,7 +156,8 @@
   </div>`;
 
   const related = PRODUCTS.filter((x) => x.id !== p.id).slice(0, 4);
-  document.getElementById("related").innerHTML = related.map(productCard).join("");
+    document.getElementById("related").innerHTML = related.map(productCard).join("");
+  })();
 </script>
 </body>
 </html>

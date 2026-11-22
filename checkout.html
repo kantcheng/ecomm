@@ -31,27 +31,27 @@
   <div class="form-grid">
     <div>
       <label>Email *</label>
-      <input type="email" placeholder="you@example.eu" required>
+      <input id="checkoutEmail" type="email" placeholder="you@example.eu" required>
     </div>
     <div>
       <label>Full name *</label>
-      <input type="text" placeholder="First and last name" required>
+      <input id="checkoutName" type="text" placeholder="First and last name" required>
     </div>
     <div class="field-full">
       <label>Address *</label>
-      <input type="text" placeholder="Street and house number" required>
+      <input id="checkoutAddress" type="text" placeholder="Street and house number" required>
     </div>
     <div>
       <label>Postal code *</label>
-      <input type="text" placeholder="e.g. 1012 AB" required>
+      <input id="checkoutPostal" type="text" placeholder="e.g. 1012 AB" required>
     </div>
     <div>
       <label>City *</label>
-      <input type="text" placeholder="e.g. Amsterdam" required>
+      <input id="checkoutCity" type="text" placeholder="e.g. Amsterdam" required>
     </div>
     <div>
       <label>Country *</label>
-      <select>
+      <select id="checkoutCountry">
         <option>🇳🇱 Netherlands</option>
         <option>🇩🇪 Germany</option>
         <option>🇫🇷 France</option>
@@ -69,19 +69,22 @@
       <input type="tel" placeholder="+31 …">
     </div>
     <div class="field-full">
-      <label>Payment method</label>
+      <label style="display:flex;gap:8px;font-weight:400;cursor:pointer">
+        <input id="saveAddress" type="checkbox" style="width:auto"> Save this address to my account
+      </label>
+    </div>
+    <div class="field-full">
+      <label for="payMethod">Payment method</label>
       <select id="payMethod">
-        <option>💳 Credit / Debit card (Visa, Mastercard)</option>
-        <option>🅿️ PayPal</option>
-        <option>🛍️ Klarna — pay later or in 3 installments</option>
-        <option>🌷 iDEAL</option>
-        <option>🍎 Apple Pay</option>
-        <option>🅖 Google Pay</option>
+        <option value="alipay">🧧 支付宝 Alipay — pay in CNY with your Alipay app</option>
+        <option value="wechat_pay">💚 微信支付 WeChat Pay — scan a QR code in WeChat</option>
       </select>
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Payments are processed securely by Stripe. You pay in CNY through your wallet; this store settles in EUR. Your card details never touch our servers.</p>
+      <p id="payConfigNotice" style="display:none;font-size:13px;color:#a4401f;background:#fff3e8;border:1px solid #f3c9a5;border-radius:9px;padding:10px 12px;margin:10px 0 0">Payment is not configured yet. The merchant account is being set up — please try again later.</p>
     </div>
     <div class="field-full" style="font-size:13px;color:var(--muted)">
       <label style="display:flex;gap:8px;font-weight:400;cursor:pointer">
-        <input type="checkbox" required style="width:auto"> I agree to the <a href="terms.html" style="color:var(--blue-dark)">Terms of Service</a> and confirm my right of withdrawal under EU consumer law.
+        <input id="acceptTerms" type="checkbox" required style="width:auto"> I agree to the <a href="terms.html" style="color:var(--blue-dark)">Terms of Service</a> and confirm my right of withdrawal under EU consumer law.
       </label>
     </div>
   </div>
@@ -89,8 +92,8 @@
   <div class="cart-sum" id="orderSummary"></div>
 
   <div style="text-align:center;margin-top:26px">
-    <button class="btn btn-primary" style="padding:15px 44px" onclick="placeOrder()">Place Order — Secure Payment 🔒</button>
-    <p style="font-size:12px;color:var(--muted);margin-top:12px">This is a demo storefront — no real payment is processed.</p>
+    <button id="payButton" class="btn btn-primary" style="padding:15px 44px" onclick="placeOrder()">Continue to secure payment 🔒</button>
+    <p style="font-size:12px;color:var(--muted);margin-top:12px">You will be redirected to Stripe to authorize the payment in your Alipay or WeChat wallet.</p>
   </div>
 </div>
 
@@ -103,34 +106,146 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
+<script src="js/payment.js"></script>
 <script>
-  const subtotal = cartSubtotal();
-  const shipping = subtotal >= VOLTARO_CONFIG.freeShippingThreshold || subtotal === 0 ? 0 : VOLTARO_CONFIG.shippingFlat;
-  document.getElementById("orderSummary").innerHTML = `
-    <h3 style="color:var(--navy);margin-bottom:12px">Order Summary</h3>
-    <div class="row"><span>Items (${cartCount()})</span><b>${eur(subtotal)}</b></div>
-    <div class="row"><span>Shipping</span><b>${shipping === 0 ? "FREE" : eur(shipping)}</b></div>
-    <div class="row"><span>VAT</span><b>Included (OSS)</b></div>
-    <div class="row total"><span>Total</span><span>${eur(subtotal + shipping)}</span></div>`;
-  function placeOrder() {
+  (async () => {
+    await window.VOLTARO_PRODUCTS_READY;
+    await window.VOLTARO_CART_READY;
+    if (window.VOLTARO_AUTH) {
+      const { session } = await window.VOLTARO_AUTH.getSession();
+      if (!session) {
+        location.href = "login.html?returnTo=checkout.html";
+        return;
+      }
+    }
+    if (window.VOLTARO_PAY) {
+      const cfg = await window.VOLTARO_PAY.config().catch(() => ({ configured: false }));
+      if (!cfg.configured) {
+        document.getElementById("payConfigNotice").style.display = "block";
+        document.getElementById("payButton").disabled = true;
+      }
+    }
+    if (new URLSearchParams(location.search).get("payment") === "cancelled") {
+      toast("Payment was cancelled — your cart is still saved.");
+    }
+    let profile = null;
+    let addresses = [];
+    if (window.VOLTARO_DB) {
+      profile = await window.VOLTARO_DB.getProfile().catch(() => null);
+      addresses = await window.VOLTARO_DB.getAddresses().catch(() => []);
+    }
+    if (profile) {
+      document.getElementById("checkoutEmail").value = profile.email || "";
+    }
+    const saved = addresses.find((a) => a.is_default) || addresses[0];
+    if (saved) {
+      document.getElementById("checkoutName").value = saved.full_name || "";
+      document.getElementById("checkoutAddress").value = saved.line1 || "";
+      document.getElementById("checkoutPostal").value = saved.postal_code || "";
+      document.getElementById("checkoutCity").value = saved.city || "";
+      document.getElementById("checkoutCountry").value = saved.country || document.getElementById("checkoutCountry").value;
+    }
+    const subtotal = cartSubtotal();
+    const shipping = subtotal >= VOLTARO_CONFIG.freeShippingThreshold || subtotal === 0 ? 0 : VOLTARO_CONFIG.shippingFlat;
+    document.getElementById("orderSummary").innerHTML = `
+      <h3 style="color:var(--navy);margin-bottom:12px">Order Summary</h3>
+      <div class="row"><span>Items (${cartCount()})</span><b>${eur(subtotal)}</b></div>
+      <div class="row"><span>Shipping</span><b>${shipping === 0 ? "FREE" : eur(shipping)}</b></div>
+      <div class="row"><span>VAT</span><b>Included (OSS)</b></div>
+      <div class="row total"><span>Total</span><span>${eur(subtotal + shipping)}</span></div>`;
+  })();
+
+  async function placeOrder() {
     if (!cartCount()) {
       toast("Your cart is empty — add a product first.");
       return;
     }
-    const cart = getCart();
-    Object.keys(cart).forEach((k) => delete cart[k]);
-    saveCart(cart);
-    localStorage.setItem("voltaro_last_order", "1");
-    document.querySelector(".checkout-wrap").innerHTML = `
-      <div style="text-align:center;padding:70px 0">
-        <div style="font-size:64px">✅</div>
-        <h1 style="color:var(--navy);margin:14px 0 8px">Order placed!</h1>
-        <p style="color:var(--muted)">Thank you — a confirmation email is on its way.<br>Your parcel ships from our NL warehouse in 1–2 business days.</p>
-        <a class="btn btn-primary" href="index.html" style="margin-top:24px">Back to Home</a>
-      </div>`;
-    toast("🎉 Demo order placed successfully");
+    if (!window.VOLTARO_DB || !window.VOLTARO_AUTH || !window.VOLTARO_PAY) {
+      toast("Checkout is temporarily unavailable. Please try again later.");
+      return;
+    }
+    const email = document.getElementById("checkoutEmail").value.trim();
+    const name = document.getElementById("checkoutName").value.trim();
+    const address = document.getElementById("checkoutAddress").value.trim();
+    const postal = document.getElementById("checkoutPostal").value.trim();
+    const city = document.getElementById("checkoutCity").value.trim();
+    if (!email || !name || !address || !postal || !city) {
+      toast("Please complete all required delivery fields.");
+      return;
+    }
+    if (!document.getElementById("acceptTerms").checked) {
+      toast("Please accept the Terms of Service to continue.");
+      return;
+    }
+    const { session } = await window.VOLTARO_AUTH.getSession();
+    if (!session) {
+      location.href = "login.html?returnTo=checkout.html";
+      return;
+    }
+    const button = document.getElementById("payButton");
+    button.disabled = true;
+    button.textContent = "Preparing secure payment…";
+    try {
+      const cart = getCart();
+      const subtotal = cartSubtotal();
+      const shipping = subtotal >= VOLTARO_CONFIG.freeShippingThreshold ? 0 : VOLTARO_CONFIG.shippingFlat;
+      const orderNo = "VT-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+      const items = Object.entries(cart).map(([id, qty]) => {
+        const p = findProduct(id);
+        return { order_no: orderNo, product_id: p.id, name: p.name, qty: Number(qty), unit_price: p.price };
+      });
+      const method = document.getElementById("payMethod").value;
+      const order = {
+        order_no: orderNo,
+        customer_email: email,
+        customer_name: name,
+        address: address,
+        postal_code: postal,
+        city: city,
+        country: document.getElementById("checkoutCountry").value,
+        payment_method: method,
+        payment_status: "unpaid",
+        subtotal: subtotal,
+        shipping: shipping,
+        total: subtotal + shipping,
+        currency: VOLTARO_CONFIG.currency,
+        status: "pending",
+      };
+      await window.VOLTARO_DB.createOrder(order, items);
+      if (document.getElementById("saveAddress").checked) {
+        await window.VOLTARO_DB.addAddress({
+          label: "Home",
+          full_name: name,
+          line1: address,
+          postal_code: postal,
+          city: city,
+          country: order.country,
+          is_default: true,
+        }).catch(() => {});
+      }
+      localStorage.setItem("voltaro_last_order", orderNo);
+
+      const payment = await window.VOLTARO_PAY.create(
+        orderNo,
+        items.map((i) => ({ id: i.product_id, qty: i.qty })),
+        method,
+        email
+      );
+      localStorage.setItem("voltaro_last_payment", JSON.stringify({
+        orderNo, sessionId: payment.sessionId, method,
+      }));
+      /* Cart is intentionally kept until the return page confirms payment. */
+      location.href = payment.url;
+    } catch (err) {
+      toast((err && err.message) || "Payment could not be started. Please try again.");
+      button.disabled = false;
+      button.textContent = "Continue to secure payment 🔒";
+    }
   }
 </script>
 </body>

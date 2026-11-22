@@ -1,0 +1,15 @@
+{
+  "currency": "EUR",
+  "freeShippingThreshold": 50.0,
+  "shippingFlat": 4.9,
+  "products": [
+    { "id": "pb-20000", "name": "VoltCore 20K Power Bank", "price": 49.99 },
+    { "id": "chg-65w", "name": "GaNCharge 65W Wall Charger", "price": 39.99 },
+    { "id": "mag-wireless", "name": "MagSnap 15W Wireless Charger", "price": 34.99 },
+    { "id": "audio-pro", "name": "AirSound Pro ANC Earbuds", "price": 79.99 },
+    { "id": "solar-24", "name": "SunPeak 24W Solar Panel", "price": 59.99 },
+    { "id": "cable-100", "name": "FlexLink 100W USB-C Cable (2 m)", "price": 12.99 },
+    { "id": "car-45", "name": "DriveCharge 45W Car Charger", "price": 24.99 },
+    { "id": "strip-eu", "name": "HomeHub Power Strip (EU)", "price": 29.99 }
+  ]
+}

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Account | Voltaro EU</title>
+<meta name="description" content="Manage your Voltaro profile, addresses, orders and shipment tracking.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b1023'/%3E%3Cpath d='M18 5 9 18h6l-2 9 9-13h-6z' fill='%232ea1f2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .acct-head { background: var(--navy); color:#fff; padding:44px 0 38px; }
+  .acct-head h1 { color:#fff; margin:0 0 6px; font-size:30px; }
+  .acct-head p { color:#b9c6d8; margin:0; }
+  .acct-grid { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:28px; align-items:start; }
+  .acct-card { background:#fff; border:1px solid var(--border); border-radius:16px; padding:24px; box-shadow:var(--shadow); }
+  .acct-card.full { grid-column:1 / -1; }
+  .acct-card h2 { margin:0 0 16px; font-size:19px; color:var(--navy); }
+  .acct-card label { display:block; font-size:13px; font-weight:700; margin:12px 0 6px; color:var(--navy); }
+  .acct-card input, .acct-card select { width:100%; border:1.5px solid var(--border); border-radius:9px; padding:11px 12px; font-size:14px; background:#fff; }
+  .acct-card input[type=checkbox] { width:auto; }
+  .acct-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+  .addr-item { border:1px solid var(--border); border-radius:11px; padding:14px; margin-bottom:10px; font-size:14px; line-height:1.5; }
+  .addr-item b { color:var(--navy); }
+  .order-item { border:1px solid var(--border); border-radius:12px; padding:18px; margin-bottom:14px; }
+  .order-top { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+  .order-top b { color:var(--navy); }
+  .order-line { font-size:13.5px; color:var(--muted); padding:3px 0; }
+  .track { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .track span { background:var(--bg-soft); border-radius:999px; padding:5px 11px; font-size:12px; color:var(--muted); }
+  .track span.on { background:#e3f3ff; color:#0b6fb5; font-weight:700; }
+  .pill { display:inline-block; background:#eaf7ef; color:#18794a; border-radius:999px; padding:4px 10px; font-size:12px; font-weight:700; }
+  @media(max-width:800px){ .acct-grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="container nav-inner">
+    <a class="logo" href="index.html" style="display:flex;align-items:center;gap:8px">
+      <svg viewBox="0 0 32 32" width="26" height="26"><rect width="32" height="32" rx="8" fill="#2ea1f2"/><path d="M18 5 9 18h6l-2 9 9-13h-6z" fill="#0b1023"/></svg>
+      Voltaro
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html">Shop</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="account.html" style="display:flex;align-items:center;gap:6px">My Account</a>
+      <a href="cart.html">Cart <span class="cart-badge">0</span></a>
+    </div>
+  </div>
+</header>
+
+<div class="acct-head">
+  <div class="container">
+    <h1 id="greeting">My Account</h1>
+    <p>Profile, saved addresses, order history and live shipment tracking.</p>
+  </div>
+</div>
+
+<div class="container" style="padding-bottom:70px">
+  <div class="acct-grid">
+    <div class="acct-card">
+      <h2>Profile</h2>
+      <form onsubmit="saveProfile(event)">
+        <label for="pName">Full name</label>
+        <input id="pName" type="text" required>
+        <label for="pEmail">Email</label>
+        <input id="pEmail" type="email" required>
+        <label for="pCountry">Country</label>
+        <input id="pCountry" type="text">
+        <label for="pPhone">Phone</label>
+        <input id="pPhone" type="tel">
+        <label style="display:flex;gap:8px;align-items:center;font-weight:400">
+          <input id="pNews" type="checkbox"> Send me product news and offers
+        </label>
+        <div class="acct-actions">
+          <button class="btn btn-primary" type="submit">Save profile</button>
+          <button class="btn btn-outline" type="button" onclick="signOut()">Sign out</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="acct-card">
+      <h2>Saved addresses</h2>
+      <div id="addressList"><p class="muted">Loading…</p></div>
+      <h2 style="margin-top:22px">Add an address</h2>
+      <form onsubmit="addAddress(event)">
+        <label for="aName">Full name</label>
+        <input id="aName" type="text" required>
+        <label for="aLine">Street and house number</label>
+        <input id="aLine" type="text" required>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><label for="aPostal">Postal code</label><input id="aPostal" type="text" required></div>
+          <div><label for="aCity">City</label><input id="aCity" type="text" required></div>
+        </div>
+        <label for="aCountry">Country</label>
+        <input id="aCountry" type="text" value="Netherlands" required>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:400">
+          <input id="aDefault" type="checkbox"> Use as default
+        </label>
+        <div class="acct-actions"><button class="btn btn-primary" type="submit">Add address</button></div>
+      </form>
+    </div>
+
+    <div class="acct-card full">
+      <h2>Orders &amp; logistics</h2>
+      <div id="orderList"><p class="muted">Loading…</p></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site">
+  <div class="container foot-bottom">
+    <span>© 2026 Voltaro B.V. · All prices include VAT (OSS).</span>
+    <span><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a></span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  function statusLabel(s) {
+    const map = {
+      pending: "Order confirmed", preparing: "Preparing in NL warehouse",
+      shipped: "Shipped", in_transit: "In transit", delivered: "Delivered",
+      cancelled: "Cancelled", paid: "Paid"
+    };
+    return map[s] || s || "Pending";
+  }
+
+  function paymentLabel(method) {
+    return method === "wechat_pay" ? "WeChat Pay" : method === "alipay" ? "Alipay" : method || "Card";
+  }
+
+  async function loadAddresses() {
+    const el = document.getElementById("addressList");
+    const rows = await window.VOLTARO_DB.getAddresses();
+    if (!rows.length) {
+      el.innerHTML = '<p class="muted">No saved addresses yet.</p>';
+      return;
+    }
+    el.innerHTML = rows.map((a) => `
+      <div class="addr-item">
+        <b>${esc(a.label)}${a.is_default ? " · Default" : ""}</b><br>
+        ${esc(a.full_name)}<br>${esc(a.line1)}<br>
+        ${esc(a.postal_code)} ${esc(a.city)}<br>${esc(a.country)}
+        ${a.phone ? "<br>" + esc(a.phone) : ""}
+        <div style="margin-top:8px"><button class="btn btn-outline" style="padding:5px 12px;font-size:12px" onclick="deleteAddress(${a.id})">Remove</button></div>
+      </div>`).join("");
+  }
+
+  async function loadOrders() {
+    const el = document.getElementById("orderList");
+    const orders = await window.VOLTARO_DB.getOrders();
+    if (!orders.length) {
+      el.innerHTML = '<p class="muted">No orders yet. <a href="products.html">Start shopping →</a></p>';
+      return;
+    }
+    const nos = orders.map((o) => o.order_no);
+    const [items, shipments] = await Promise.all([
+      window.VOLTARO_DB.getOrderItems(nos),
+      window.VOLTARO_DB.getShipments(nos),
+    ]);
+    el.innerHTML = orders.map((o) => {
+      const lines = items.filter((i) => i.order_no === o.order_no);
+      const ship = shipments.find((s) => s.order_no === o.order_no);
+      const stage = ship ? ship.status : "preparing";
+      const steps = ["preparing", "shipped", "in_transit", "delivered"];
+      const idx = steps.indexOf(stage);
+      return `
+      <div class="order-item">
+        <div class="order-top">
+          <div><b>Order ${esc(o.order_no)}</b><br><span class="order-line">${new Date(o.created_at).toLocaleString()}</span></div>
+          <div style="text-align:right">
+            <span class="pill" style="background:${o.payment_status === "paid" ? "#eaf7ef" : "#fff3e8"};color:${o.payment_status === "paid" ? "#18794a" : "#a4401f"}">${o.payment_status === "paid" ? "Paid · " + esc(paymentLabel(o.payment_method)) : "Awaiting payment"}</span><br>
+            <span class="pill" style="margin-top:6px">${esc(statusLabel(o.shipping_status))}</span><br>
+            <b style="margin-top:6px;display:inline-block">${eur(Number(o.total))}</b>
+          </div>
+        </div>
+        ${lines.map((i) => `<div class="order-line">${esc(i.qty)} × ${esc(i.name)} — ${eur(Number(i.unit_price))}</div>`).join("")}
+        <div class="track">
+          ${steps.map((s, n) => `<span class="${idx >= n ? "on" : ""}">${statusLabel(s)}</span>`).join("")}
+        </div>
+        <div class="order-line" style="margin-top:10px">
+          ${ship && ship.carrier ? "Carrier: " + esc(ship.carrier) + " · " : ""}
+          ${ship && ship.tracking_no ? "Tracking: <b>" + esc(ship.tracking_no) + "</b> · " : ""}
+          ${ship && ship.estimated_delivery ? "Est. delivery: " + esc(ship.estimated_delivery) : "Estimated dispatch: 1–2 business days"}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  async function saveProfile(e) {
+    e.preventDefault();
+    try {
+      await window.VOLTARO_DB.saveProfile({
+        name: document.getElementById("pName").value.trim(),
+        email: document.getElementById("pEmail").value.trim(),
+        country: document.getElementById("pCountry").value.trim(),
+        phone: document.getElementById("pPhone").value.trim(),
+        newsletter_opt_in: document.getElementById("pNews").checked,
+      });
+      toast("✅ Profile saved.");
+    } catch (err) {
+      toast("Could not save your profile. Please try again.");
+    }
+  }
+
+  async function addAddress(e) {
+    e.preventDefault();
+    try {
+      await window.VOLTARO_DB.addAddress({
+        label: "Home",
+        full_name: document.getElementById("aName").value.trim(),
+        line1: document.getElementById("aLine").value.trim(),
+        postal_code: document.getElementById("aPostal").value.trim(),
+        city: document.getElementById("aCity").value.trim(),
+        country: document.getElementById("aCountry").value.trim(),
+        is_default: document.getElementById("aDefault").checked,
+      });
+      e.target.reset();
+      await loadAddresses();
+      toast("✅ Address added.");
+    } catch (err) {
+      toast("Could not add the address. Please try again.");
+    }
+  }
+
+  async function deleteAddress(id) {
+    if (!confirm("Remove this saved address?")) return;
+    await window.VOLTARO_DB.deleteAddress(id);
+    await loadAddresses();
+    toast("Address removed.");
+  }
+
+  async function signOut() {
+    await window.VOLTARO_AUTH.signOut();
+    location.href = "index.html";
+  }
+
+  (async () => {
+    if (!window.VOLTARO_AUTH || !window.VOLTARO_DB) {
+      location.href = "login.html?returnTo=account.html";
+      return;
+    }
+    const { session } = await window.VOLTARO_AUTH.getSession();
+    if (!session) {
+      location.href = "login.html?returnTo=account.html";
+      return;
+    }
+    const user = session.user || {};
+    const profile = await window.VOLTARO_DB.getProfile().catch(() => null);
+    document.getElementById("greeting").textContent = "Hi, " + (profile?.name || user.name || user.email || "there") + " 👋";
+    document.getElementById("pName").value = profile?.name || user.name || "";
+    document.getElementById("pEmail").value = profile?.email || user.email || "";
+    document.getElementById("pCountry").value = profile?.country || "";
+    document.getElementById("pPhone").value = profile?.phone || "";
+    document.getElementById("pNews").checked = !!profile?.newsletter_opt_in;
+    await Promise.all([loadAddresses(), loadOrders()]);
+  })();
+</script>
+</body>
+</html>

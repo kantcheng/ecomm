@@ -61,6 +61,9 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+<script src="js/cloud-config.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
 <script>
@@ -108,7 +111,11 @@
         </div>
       </div>`;
   }
-  renderCart();
+  (async () => {
+    await window.VOLTARO_PRODUCTS_READY;
+    await window.VOLTARO_CART_READY;
+    renderCart();
+  })();
 </script>
 </body>
 </html>
